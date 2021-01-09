@@ -4,14 +4,18 @@ import neat
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
+from pygame import mixer
 
 WIN_WIDTH = 550
 WIN_HEIGHT = 800
 
 BIRD_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird2.png")))
-PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "pipe_bottom.png")))
+PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "pipe.png")))
 BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bg.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "base.png")))
+
+mixer.init()
+SOUNDS = [mixer.Sound(os.path.join("sounds", "die.wav")),mixer.Sound(os.path.join("sounds", "hit.wav")), mixer.Sound(os.path.join("sounds", "point.wav")),mixer.Sound(os.path.join("sounds", "wing.wav"))]
 
 FPS = 30
 
@@ -64,7 +68,6 @@ class Bird:
         rot_img = pygame.transform.rotate(self.img, self.tilt)
         new_rect = rot_img.get_rect(center = self.img.get_rect(center = (self.x, self.y)).center)
         win.blit(rot_img,new_rect.topleft)
-        #win.blit(self.img, (self.x, self.y))
     
     def get_mask(self):
         return pygame.mask.from_surface(self.img)
@@ -179,17 +182,21 @@ def main():
                     run = False
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
+                        SOUNDS[3].play()
                         bird.jump()
         
             bird.move(win)
             for i in range (len(pipes)):
                 pipes[i].move(pipe_vel)
             if check_collisions(bird, pipes[last_pipe]) == True:
+                SOUNDS[1].play()
+                SOUNDS[0].play()
                 play = False
                 lost = True
         
             if passed == 0 and bird.x > pipes[last_pipe].x+30:
                 score+=1
+                SOUNDS[2].play()
                 passed = 1
                 if score >=15 and score%15 == 0:
                     pipe_vel*=pipe_acc
