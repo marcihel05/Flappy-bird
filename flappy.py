@@ -19,8 +19,8 @@ FPS = 30
 class Bird:
 
     #tilt and flap
-    ROT_VEL = 20
-    MAX_ROT = 90
+    ROT_VEL = 15
+    MAX_ROT = 25
 
     def __init__(self, x, y):
         self.img = BIRD_IMG
@@ -29,6 +29,7 @@ class Bird:
         self.vel = 0
         self.tick = 0
         self.height = self.y
+        self.tilt = 0
 
     def jump(self):
         self.vel = -10.5
@@ -36,7 +37,7 @@ class Bird:
         self.y = self.y +13*self.vel
         self.height = self.y
 
-    def move(self):
+    def move(self, win):
         self.tick +=1
         d = self.vel + self.tick + 1.5*self.tick**2   #s = v_0*t + a*t^2/2
 
@@ -48,10 +49,38 @@ class Bird:
         
         self.y = self.y+d
 
+        if d<0 or self.y<self.height+50: #bird goes up
+            if self.tilt< self.MAX_ROT:
+                self.tilt = self.MAX_ROT
+            
+        else: #bird goes down
+            if self.tilt > -90:
+                self.tilt -= self.ROT_VEL
+            
+            
+           # pygame.display.update()
+
+          #orig_rect = self.img.get_rect()
+           # rot_img = pygame.transform.rotate(self.img, -self.ROT_VEL)
+            #rot_rect = orig_rect.copy()
+            #rot_rect.center = rot_img.get_rect().center
+            #rot_img = rot_img.subsurface(rot_rect).copy()
+            #win.blit(rot_img,rot_rect.topleft)
+            #pygame.display.update()
+            
+            
+
+        #if(d<0):# bird goes upp
+
+
         #tilt and flap
 
     def draw(self, win):
-        win.blit(self.img, (self.x, self.y))
+
+        rot_img = pygame.transform.rotate(self.img, self.tilt)
+        new_rect = rot_img.get_rect(center = self.img.get_rect(center = (self.x, self.y)).center)
+        win.blit(rot_img,new_rect.topleft)
+        #win.blit(self.img, (self.x, self.y))
     
     def get_mask(self):
         return pygem.mask.from_surface(self.img)
@@ -84,13 +113,30 @@ class Pipe:
    # def get_rect(self):
 
 
-    
-def draw_window(win, bird, pipes,score):
+#def check_collisions(bird, pipe):
+    #if coliision exists:
+        
+def game_over(win, pipes, score):
+    win.blit(BG_IMG, (0,0))
+    for i in range (len(pipes)):
+        pipes[i].draw(win)
+    myfont = pygame.font.SysFont("monospace", 50)
+    scoretext = myfont.render("Score = "+str(score), 1, (0,0,0))
+    overtext = myfont.render("Game Over", 1, (0,0,0))
+    win.blit(scoretext, (200,300))
+    win.blit(overtext, (200,100))
+    pygame.display.update()
+
+
+
+
+
+def draw_window(win, bird, pipes, score):
     win.blit(BG_IMG, (0,0))
     bird.draw(win)
     for i in range (len(pipes)):
         pipes[i].draw(win)
-    myfont = pygame.font.SysFont("monospace", 16)
+    myfont = pygame.font.SysFont("monospace", 25)
     scoretext = myfont.render("Score = "+str(score), 1, (0,0,0))
     win.blit(scoretext, (5,10))
     pygame.display.update()
@@ -119,10 +165,12 @@ def main():
                 if event.key == pygame.K_SPACE:
                     bird.jump()
         
-        bird.move()
+        bird.move(win)
         for i in range (len(pipes)):
             pipes[i].move(pipe_vel)
-        #check for crash
+        #if check_collisions(bird, pipes[last_pipe]):
+            #game_over(win, pipes, score)
+            #play = False
             #todo
         
         if passed == 0 and bird.x > pipes[last_pipe].x+30:
