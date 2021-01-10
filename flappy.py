@@ -1,3 +1,6 @@
+#dodati gornji i donji rub
+
+
 import random
 import time
 import neat
@@ -19,6 +22,14 @@ SOUNDS = [mixer.Sound(os.path.join("sounds", "die.wav")),mixer.Sound(os.path.joi
 
 FPS = 30
 
+pygame.font.init()
+
+SCORE_FONT = pygame.font.SysFont("monospace", 25)
+GAME_OVER_FONT = pygame.font.SysFont("monospace", 50)
+overtext = GAME_OVER_FONT.render("Game Over", 1, (0,0,0))
+continuetext1 = GAME_OVER_FONT.render("Press Enter", 1, (0,0,0))
+continuetext2 = GAME_OVER_FONT.render("to start again", 1, (0,0,0))
+
 
 class Bird:
 
@@ -38,12 +49,14 @@ class Bird:
     def jump(self):
         self.vel = -10.5
         self.tick = 0
-        self.y = self.y +13*self.vel
+        self.y = self.y +4*self.vel
         self.height = self.y
 
     def move(self, win):
+        if self.tick == -1:
+            self.tick+=1
         self.tick +=1
-        d = self.vel + self.tick + 1.5*self.tick**2   #s = v_0*t + a*t^2/2
+        d = self.vel*self.tick + 1.5*self.tick**2   #s = v_0*t + a*t^2/2
 
         if d>=16:
             d = 16
@@ -71,9 +84,6 @@ class Bird:
     
     def get_mask(self):
         return pygame.mask.from_surface(self.img)
-    
-    def get_rect(self):
-        return self.img.get_rect(topleft = (self.x, self.y))
 
 class Pipe:
 
@@ -87,8 +97,8 @@ class Pipe:
         self.vel = -5
         self.acc = 1.5
 
-        random.seed(time.time())
-        self.height = random.randint(50, 450)
+       # random.seed(time.time())
+        self.height = random.randrange(50, 450)
         self.top = self.height - self.PIPE_TOP.get_height()
         self.bottom = self.height + self.gap
         
@@ -106,16 +116,15 @@ class Pipe:
     def get_mask(self):
         return pygame.mask.from_surface(self.PIPE_BOTTOM), pygame.mask.from_surface(self.PIPE_TOP)
     
-    def get_rect(self):
-        return self.PIPE_TOP.get_rect(topleft = (self.x, self.top)), self.PIPE_BOTTOM.get_rect(topleft = (self.x, self.bottom))
+
 
 
 def check_collisions(bird, pipe):
     bird_mask = bird.get_mask()
     pipe_masks = pipe.get_mask()
     
-    top_offset = ((pipe.x - bird.x), (pipe.top - round(bird.y)))
-    bottom_offset = ((pipe.x - bird.x), (pipe.bottom - round(bird.y)))
+    top_offset = ((round(pipe.x) - round(bird.x)), (round(pipe.top) - round(bird.y)))
+    bottom_offset = ((round(pipe.x) - round(bird.x)), (round(pipe.bottom) - round(bird.y)))
    
     bottom_point = bird_mask.overlap(pipe_masks[0], bottom_offset)
     top_point = bird_mask.overlap(pipe_masks[1], top_offset)
@@ -126,19 +135,22 @@ def check_collisions(bird, pipe):
         return False
     
 def game_over(win, pipes, score):
-    win.blit(BG_IMG, (0,0))
-    for i in range (len(pipes)):
-        pipes[i].draw(win)
-    myfont = pygame.font.SysFont("monospace", 50)
-    scoretext = myfont.render("Score = "+str(score), 1, (0,0,0))
-    overtext = myfont.render("Game Over", 1, (0,0,0))
-    continuetext1 = myfont.render("Press Enter", 1, (0,0,0))
-    continuetext2 = myfont.render("to start again", 1, (0,0,0))
-    win.blit(scoretext, (150,250))
-    win.blit(overtext, (150,100))
-    win.blit(continuetext1, (100,400))
-    win.blit(continuetext2, (80,450))
-    pygame.display.update()
+    while 1:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return False
+        win.blit(BG_IMG, (0,0))
+        for i in range (len(pipes)):
+            pipes[i].draw(win)
+        scoretext = GAME_OVER_FONT.render("Score = "+str(score), 1, (0,0,0))
+        win.blit(scoretext, (150,250))
+        win.blit(overtext, (150,100))
+        win.blit(continuetext1, (100,400))
+        win.blit(continuetext2, (80,450))
+        pygame.display.update()
 
 
 
@@ -149,8 +161,7 @@ def draw_window(win, bird, pipes, score):
     bird.draw(win)
     for i in range (len(pipes)):
         pipes[i].draw(win)
-    myfont = pygame.font.SysFont("monospace", 25)
-    scoretext = myfont.render("Score = "+str(score), 1, (0,0,0))
+    scoretext = SCORE_FONT.render("Score = "+str(score), 1, (0,0,0))
     win.blit(scoretext, (5,10))
     pygame.display.update()
 
@@ -207,14 +218,12 @@ def main():
                 last_pipe+=1
                 passed = 0
     
-        while lost == True:
-            game_over(win, pipes, score)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        lost = False
+        if lost == True:
+            if game_over(win, pipes, score):
+                run = False
+            lost = False
+            
+                
     pygame.quit()
     quit()
 
