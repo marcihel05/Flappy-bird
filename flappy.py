@@ -131,8 +131,11 @@ def check_collisions(bird, pipe):
 
     if bottom_point or top_point:
         return True
+    if bird.y <=0 or bird.y > WIN_HEIGHT:
+        return True
     else:
         return False
+    
     
 def game_over(win, pipes, score):
     while 1:
@@ -178,7 +181,6 @@ def main():
         pipes = [Pipe(500)]
         last_pipe = 0
         play = True
-        lost = False
         passed = 0
         score = 0
         pipe_vel = -5
@@ -199,13 +201,12 @@ def main():
             bird.move(win)
             for i in range (len(pipes)):
                 pipes[i].move(pipe_vel)
-            if check_collisions(bird, pipes[last_pipe]) == True:
+            if check_collisions(bird, pipes[last_pipe]):
                 SOUNDS[1].play()
                 SOUNDS[0].play()
                 play = False
-                lost = True
         
-            if passed == 0 and bird.x > pipes[last_pipe].x+30:
+            if passed == 0 and bird.x >= pipes[last_pipe].x+pipes[last_pipe].PIPE_TOP.get_width():
                 score+=1
                 SOUNDS[2].play()
                 passed = 1
@@ -218,10 +219,9 @@ def main():
                 last_pipe+=1
                 passed = 0
     
-        if lost == True:
+        if play == False:
             if game_over(win, pipes, score):
                 run = False
-            lost = False
             
                 
     pygame.quit()
